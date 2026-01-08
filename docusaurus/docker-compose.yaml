@@ -1,0 +1,9 @@
+services:
+  docusaurus:
+    image: harbor.redgelabs.com/dum/dum-zos-docker/docusaurus/dev-server:latest
+    container_name: docusaurus
+    ports:
+      - "3000:3000"
+    volumes:
+    - "./redgemedia/documentation/ai-solutions:/opt/docusaurus/redgemedia/documentation/ai-solutions"
+

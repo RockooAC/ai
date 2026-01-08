@@ -1,0 +1,97 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+    networks:
+      - net
+    volumes:
+      - ./volumes/qdrant/storage:/qdrant/storage
+      - ./volumes/qdrant/snapshots:/qdrant/snapshots
+      - ../qdrant/config.yaml:/qdrant/config/config.yaml
+    environment:
+      QDRANT__SERVICE__ENABLE_TLS: 0
+      QDRANT__CONFIG_PATH: /qdrant/config/config.yaml
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G
+
+  pipelines:
+    build:
+      context: ../pipelines
+      dockerfile: ../pipelines/Dockerfile
+    container_name: pipelines
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              count: 1
+    ports:
+      - "9099:9099"
+    networks:
+      - net
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    environment:
+      # Ollama
+      - ENABLE_OLLAMA_API=True
+      - OLLAMA_BASE_URL=http://10.255.240.156:11434
+      # Qdrant
+      - VECTOR_DB=qdrant
+      - QDRANT_URI=http://10.255.240.18:6333
+      # Web search
+      - ENABLE_RAG_WEB_SEARCH=True
+      - RAG_WEB_SEARCH_ENGINE=searxng
+      - RAG_WEB_SEARCH_RESULT_COUNT=5
+      - RAG_WEB_SEARCH_CONCURRENT_REQUESTS=10
+      - SEARXNG_QUERY_URL="http://10.255.240.156:8006/search?q=<query>"
+      # RAG
+      - RAG_EMBEDDING_ENGINE=ollama
+      - RAG_OLLAMA_BASE_URL=http://10.255.246.131:11434
+      - RAG_EMBEDDING_MODEL=gte-qwen2.5-instruct-q5
+      - RAG_TOP_K=5
+      - RAG_RELEVANCE_THRESHOLD=0.1
+      - RAG_TEXT_SPLITTER=token
+      - RAG_EMBEDDING_BATCH_SIZE=4
+      - ENABLE_RETRIEVAL_QUERY_GENERATION=False
+      - CHUNK_SIZE=1024
+      - CHUNK_OVERLAP=256
+      - PDF_EXTRACT_IMAGES=True
+      - ENABLE_RAG_LOCAL_WEB_FETCH=true
+      # Pipeline
+      - ENABLE_OPENAI_API=True
+      - OPENAI_API_KEYS=0p3n-w3bu!
+      - OPENAI_API_BASE_URLS=http://pipelines:9099
+      # Whisper
+      - WHISPER_MODEL=base
+      # Other
+      - USE_CUDA_DOCKER=False
+      - ENABLE_TAGS_GENERATION=False
+      - ENABLE_EVALUATION_ARENA_MODELS=False
+      - ENABLE_AUTOCOMPLETE_GENERATION=False
+      - DEFAULT_LOCALE=pl
+      - WEBUI_NAME=Local_OWUI
+      - ENV=dev
+      - PORT=8081
+      - GLOBAL_LOG_LEVEL="DEBUG"
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./volumes/open-webui:/app/backend/data
+    networks:
+      - net
+
+networks:
+  net:
+    driver: bridge

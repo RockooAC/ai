@@ -1,0 +1,53 @@
+services:
+  # qdrant-local:
+  #   image: qdrant/qdrant:latest
+  #   container_name: qdrant-local
+  #   ports:
+  #     - "6333:6333"
+  #   networks:
+  #     - net
+  #   volumes:
+  #     - ../volumes/qdrant/storage:/qdrant/storage
+  #     - ../volumes/qdrant/snapshots:/qdrant/snapshots
+  #     - ../qdrant/config.yaml:/qdrant/config/config.yaml
+  #   environment:
+  #     QDRANT__SERVICE__ENABLE_TLS: 0
+  #     QDRANT__CONFIG_PATH: /qdrant/config/config.yaml
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 8G
+  #       reservations:
+  #         memory: 4G
+  pipelines-local:
+    build:
+      context: ../../pipelines
+      dockerfile: Dockerfile-dev
+    container_name: pipelines-local
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              count: 1
+    ports:
+      - "9099:9099"
+    networks:
+      - net
+  open-webui-local:
+    image: ghcr.io/open-webui/open-webui:v0.5.20
+    container_name: open-webui-local
+    restart: always
+    env_file: open-webui-local.env
+    ports:
+      - "8081:8081"
+    volumes:
+      - ../volumes/open-webui:/app/backend/data
+    networks:
+      - net
+networks:
+  net:
+    driver: bridge

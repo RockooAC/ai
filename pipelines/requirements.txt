@@ -1,0 +1,11 @@
+qdrant-client<1.16
+llama_index
+llama-index-embeddings-ollama
+llama-index-llms-ollama
+llama-index-llms-openai-like
+llama-index-vector-stores-qdrant
+llama-index-embeddings-fastembed
+mistune
+llama-index-legacy
+sentence-transformers
+opencv-python-headless
