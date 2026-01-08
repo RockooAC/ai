@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ollama-embedder
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              device_ids: ['GPU-578d831f-e86a-ec0b-c919-1b50ddedbd52']  # Quadro P5000 16GB mem ; id 2 ; c24
+    networks:
+      - embedder
+    volumes:
+      - ollama-embedder-data:/root/.ollama
+    ports:
+      - "11434:11434"
+
+volumes:
+  ollama-embedder-data:
+    driver: local
+
+networks:
+  embedder:
+    driver: bridge
+

@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  jina:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ollama-jina-embedder
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              device_ids: ['GPU-d6358919-62a6-3996-79cb-4875a5dd23c8']  # NVIDIA GeForce RTX 3080 10GB mem ; id 1 ; embedder host
+    networks:
+      - jina
+    volumes:
+      - jina-embedder-data:/root/.ollama
+    ports:
+      - "11435:11434"
+    restart: always
+    environment:
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: "24h"
+
+volumes:
+  jina-embedder-data:
+    driver: local
+
+networks:
+  jina:
+    driver: bridge
+

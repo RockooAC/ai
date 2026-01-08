@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    environment:
+      - WEBUI_NAME=zos-open-webui
+      - ENV=dev
+      - PORT=8081
+      - OLLAMA_BASE_URL=http://10.255.240.156:11434
+#      - CHROMA_DATABASE=zos
+#      - CHROMA_HTTP_PORT=8005
+#      - CHROMA_HTTP_HOST=10.255.240.156
+      - VECTOR_DB=qdrant
+      - QDRANT_URI=http://10.255.240.18:6333
+      - ENABLE_RAG_WEB_SEARCH=True
+      - RAG_WEB_SEARCH_ENGINE="searxng"
+      - SEARXNG_QUERY_URL="http://10.255.240.156:8006/search?q=<query>"
+      - ENABLE_RAG_LOCAL_WEB_FETCH=true
+      - DOCS_DIR=/data/docs
+#      - RAG_TOP_K=7
+#      - RAG_EMBEDDING_ENGINE=ollama
+#      - RAG_EMBEDDING_MODEL=<placeholder>
+    ports:
+      - "8080:8081"
+    volumes:
+      - open-webui:/app/backend/data
+      - /opt/wrk/git/rg/doc/docusaurus/redgemedia/documentation:/data/docs
+    networks:
+      - net
+
+networks:
+  net:
+    driver: bridge
+
+volumes:
+  open-webui:
+    driver: local

@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: embedder-load-balancer
+    ports:
+      - "11434:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - ollama-embedder1
+      - ollama-embedder2
+    networks:
+      - embedder
+
+  ollama-embedder1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ollama-embedder1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              device_ids: ['GPU-492c5280-3a24-1eaa-44cd-6f262a7b9735']  # Quadro RTX 4000 8GB mem ; id 0 ; embedder host
+    networks:
+      - embedder
+    restart: always
+    environment:
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: "24h"
+
+  ollama-embedder2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ollama-embedder2
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              device_ids: ['GPU-d6358919-62a6-3996-79cb-4875a5dd23c8']  # NVIDIA GeForce RTX 3080 10GB mem ; id 1 ; embedder host
+    networks:
+      - embedder
+    restart: always
+    environment:
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: "24h"
+
+networks:
+  embedder:
+    driver: bridge

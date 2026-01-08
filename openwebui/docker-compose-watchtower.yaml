@@ -1,0 +1,76 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    environment:
+      # Ollama
+      - ENABLE_OLLAMA_API=True
+      - OLLAMA_BASE_URL=http://10.255.240.156:11434
+      # Qdrant
+      - VECTOR_DB=qdrant
+      - QDRANT_URI=http://10.255.240.18:6333
+      # Web search
+      - ENABLE_RAG_WEB_SEARCH=True
+      - RAG_WEB_SEARCH_ENGINE=searxng
+      - RAG_WEB_SEARCH_RESULT_COUNT=5
+      - RAG_WEB_SEARCH_CONCURRENT_REQUESTS=10
+      - SEARXNG_QUERY_URL="http://10.255.240.156:8006/search?q=<query>"
+      # RAG
+      - RAG_EMBEDDING_ENGINE=ollama
+      - RAG_OLLAMA_BASE_URL=http://10.255.246.131:11434
+      - RAG_EMBEDDING_MODEL=gte-qwen2.5-instruct-q5
+      - RAG_TOP_K=5
+      - RAG_RELEVANCE_THRESHOLD=0.1
+      - RAG_TEXT_SPLITTER=token
+      - RAG_EMBEDDING_BATCH_SIZE=4
+      - ENABLE_RETRIEVAL_QUERY_GENERATION=False
+      - CHUNK_SIZE=1024
+      - CHUNK_OVERLAP=256
+      - PDF_EXTRACT_IMAGES=True
+      - ENABLE_RAG_LOCAL_WEB_FETCH=true
+      # Pipeline
+      - ENABLE_OPENAI_API=True
+      - OPENAI_API_KEYS=0p3n-w3bu!
+      - OPENAI_API_BASE_URLS=http://10.255.240.156:9099
+      # Whisper
+      - WHISPER_MODEL=base
+      # Other
+      - USE_CUDA_DOCKER=False
+      - ENABLE_TAGS_GENERATION=False
+      - ENABLE_EVALUATION_ARENA_MODELS=False
+      - ENABLE_AUTOCOMPLETE_GENERATION=False
+      - DEFAULT_LOCALE=en
+      - WEBUI_NAME=zos-open-webui
+      - ENV=dev
+      - PORT=8081
+      - GLOBAL_LOG_LEVEL="DEBUG"
+      # Previous settings
+      - DOCS_DIR=/data/docs
+    ports:
+      - "8080:8081"
+    volumes:
+      - open-webui:/app/backend/data
+      - /opt/wrk/git/rg/doc/docusaurus/redgemedia/documentation:/data/docs
+    networks:
+      - net
+  watchtower: # https://docs.openwebui.com/getting-started/updating/#automatically-updating-open-webui-with-watchtower
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true         # remove old images after update
+      - WATCHTOWER_LABEL_ENABLE=true    # enable watchtower for all containers with label com.centurylinklabs.watchtower.enable=true
+      - WATCHTOWER_SCHEDULE=0 0 7 * * * # every day at 7:00
+    depends_on:
+      - open-webui
+
+networks:
+  net:
+    driver: bridge
+
+volumes:
+  open-webui:
+    driver: local

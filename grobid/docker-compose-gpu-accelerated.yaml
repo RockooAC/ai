@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  grobid_gpu:
+    image: grobid/grobid:0.8.1
+    container_name: grobid_gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              device_ids: [ 'GPU-492c5280-3a24-1eaa-44cd-6f262a7b9735' ] # RTX 4000
+    restart: always
+    ports:
+      - "8070:8070"
+    networks:
+      - grobid
+
+networks:
+  grobid:
+    driver: bridge

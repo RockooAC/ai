@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  ollama-qwen3-reranker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ollama-qwen3-reranker
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              device_ids: ['GPU-0dfc72e0-68d4-d1fb-9359-00cbec314a65']  # NVIDIA Quadro RTX 5000 16GB mem ; id 2 ; embedder host
+    networks:
+      - qwen3
+    volumes:
+      - qwen3-reranker-data:/root/.ollama
+    ports:
+      - "11436:11434"
+    restart: always
+    environment:
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: "24h"
+
+volumes:
+  qwen3-reranker-data:
+    driver: local
+
+networks:
+  qwen3:
+    driver: bridge
+

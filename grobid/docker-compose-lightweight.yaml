@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  grobid_lightweight:
+    image: lfoppiano/grobid:latest-crf
+    container_name: grobid_lightweight
+    restart: always
+    ports:
+      - "8070:8070"
+    networks:
+      - grobid
+    volumes:
+      - "./grobid.yaml:/opt/grobid/grobid-home/config/grobid.yaml:ro"
+    deploy:
+      resources:
+        limits:
+          memory: 12G
+        reservations:
+          memory: 10G
+
+networks:
+  grobid:
+    driver: bridge
